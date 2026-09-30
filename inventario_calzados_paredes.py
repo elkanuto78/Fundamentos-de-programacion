@@ -1,16 +1,35 @@
+import json
+import os
+
 TALLAS = [34, 35, 36, 37, 38, 39]
 STOCK_MIN = 5
+ARCHIVO = "inventario.txt"
 
 nombres = []
 inventario = []
 
 
-def leer_entero(mensaje):
+def cargar_datos():
+    if os.path.exists(ARCHIVO):
+        with open(ARCHIVO, "r", encoding="utf-8") as f:
+            datos = json.load(f)
+            nombres.extend(datos["nombres"])
+            inventario.extend(datos["inventario"])
+
+
+def guardar_datos():
+    with open(ARCHIVO, "w", encoding="utf-8") as f:
+        json.dump({"nombres": nombres, "inventario": inventario}, f)
+
+
+def leer_entero(mensaje, nombre_dato, minimo=None, maximo=None):
     while True:
         txt = input(mensaje)
         if txt.isdigit():
-            return int(txt)
-        print("No es un numero valido. Intente de nuevo.")
+            valor = int(txt)
+            if (minimo is None or valor >= minimo) and (maximo is None or valor <= maximo):
+                return valor
+        print(f"Invalido, volver a dar {nombre_dato}: ")
 
 
 def buscar_producto(nombre):
@@ -27,7 +46,7 @@ def registrar_producto():
         return
     stocks = []
     for talla in TALLAS:
-        stocks.append(leer_entero(f"Stock talla {talla}: "))
+        stocks.append(leer_entero(f"Stock talla {talla}: ", "stock"))
     nombres.append(nombre)
     inventario.append(stocks)
     print("Producto registrado.")
@@ -53,23 +72,21 @@ def actualizar_stock():
     if idx == -1:
         print("Producto no encontrado.")
         return
-    talla = leer_entero("Talla a actualizar (34-39): ")
-    if talla < 34 or talla > 39:
-        print("Talla invalida.")
-        return
-    nuevo_stock = leer_entero("Nuevo stock: ")
+    talla = leer_entero("Talla a actualizar (34-39): ", "talla", 34, 39)
+    nuevo_stock = leer_entero("Nuevo stock: ", "stock")
     inventario[idx][talla - 34] = nuevo_stock
     print("Stock actualizado.")
 
 
 def main():
+    cargar_datos()
     while True:
         print()
         print("1. Registrar producto")
         print("2. Consultar productos")
         print("3. Actualizar stock por talla")
         print("4. Salir")
-        opcion = leer_entero("Seleccione una opcion: ")
+        opcion = leer_entero("Seleccione una opcion: ", "opcion", 1, 4)
 
         if opcion == 1:
             registrar_producto()
@@ -78,10 +95,9 @@ def main():
         elif opcion == 3:
             actualizar_stock()
         elif opcion == 4:
+            guardar_datos()
             print("Saliendo...")
             break
-        else:
-            print("Opcion invalida.")
 
 
 if __name__ == "__main__":
