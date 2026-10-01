@@ -79,3 +79,31 @@ def actualizar_stock():
         return
     talla = leer_entero("Talla a actualizar (34-39): ", "talla", 34, 39)
     nuevo_stock = leer_entero("Nuevo stock: ", "stock")
+    inventario[idx][talla - 34] = nuevo_stock
+    print("Stock actualizado.")
+
+
+def main():
+    cargar_datos()
+    while True:
+        print()
+        print("1. Registrar producto")
+        print("2. Consultar productos")
+        print("3. Actualizar stock por talla")
+        print("4. Salir")
+        opcion = leer_entero("Seleccione una opcion: ", "opcion", 1, 4)
+
+        if opcion == 1:
+            registrar_producto()
+        elif opcion == 2:
+            consultar_productos()
+        elif opcion == 3:
+            actualizar_stock()
+        elif opcion == 4:
+            guardar_datos()
+            print("Saliendo...")
+            break
+
+
+if __name__ == "__main__":
+    main()
