@@ -13,13 +13,18 @@ def cargar_datos():
     if os.path.exists(ARCHIVO):
         with open(ARCHIVO, "r", encoding="utf-8") as f:
             datos = json.load(f)
-            nombres.extend(datos["nombres"])
-            inventario.extend(datos["inventario"])
+            for producto in datos.get("Tipo de calzado", []):
+                nombres.append(producto["nombre"])
+                inventario.append([producto["tallas"][str(t)] for t in TALLAS])
 
 
 def guardar_datos():
+    productos = []
+    for nombre, stocks in zip(nombres, inventario):
+        tallas = {str(t): s for t, s in zip(TALLAS, stocks)}
+        productos.append({"nombre": nombre, "tallas": tallas})
     with open(ARCHIVO, "w", encoding="utf-8") as f:
-        json.dump({"nombres": nombres, "inventario": inventario}, f)
+        json.dump({"Tipo de calzado": productos}, f, ensure_ascii=False, indent=2)
 
 
 def leer_entero(mensaje, nombre_dato, minimo=None, maximo=None):
