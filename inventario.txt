@@ -1,7 +1,7 @@
 {
   "Tipo de calzado": [
     {
-      "nombre": "pepe",
+      "nombre": "Sandalia Sport",
       "tallas": {
         "34": 1,
         "35": 1,
