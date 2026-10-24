@@ -16,23 +16,26 @@ Funcion b <- esNum(t)
 FinFuncion
 
 Algoritmo InventarioCalzadosParedes
-    Definir op, i, j, c, sMin, t, sVal Como Entero
-    Definir nom Como Caracter
-    Definir inv Como Entero
-    Definir nB Como Caracter
-    Definir enc Como Logico
-    Definir idx Como Entero
-    Definir txt Como Caracter
-    Definir ok Como Logico
+    Definir op, i, j, k, c, sMin, t, sVal, idx, pos Como Entero
+    Definir nom, nB, aux, txt Como Caracter
+    Definir inv, tallas Como Entero
+    Definir enc, ok, hubo Como Logico
 
     Dimension nom[100]
     Dimension inv[100,6]
+    Dimension tallas[6]
+
+    // Tallas disponibles (equivale a TALLAS = [34..39])
+    Para j <- 1 Hasta 6 Con Paso 1
+        tallas[j] <- 33 + j
+    FinPara
 
     c <- 0
     sMin <- 5
 
     Repetir
         Escribir ""
+        Escribir "===== INVENTARIO DE CALZADO ====="
         Escribir "1. Registrar producto"
         Escribir "2. Consultar productos"
         Escribir "3. Actualizar stock por talla"
@@ -47,87 +50,119 @@ Algoritmo InventarioCalzadosParedes
                 Si op >= 1 Y op <= 4 Entonces
                     ok <- Verdadero
                 SiNo
-                    Escribir "Invalido, volver a dar opcion: "
+                    Escribir "Invalido. Ingrese nuevamente la opcion."
                 FinSi
             SiNo
-                Escribir "Invalido, volver a dar opcion: "
+                Escribir "Invalido. Ingrese nuevamente la opcion."
             FinSi
         Hasta Que ok
 
-        Según op Hacer
+        Segun op Hacer
             1:
+                // ---------- Registrar producto ----------
                 Escribir "Nombre del producto: "
                 Leer nB
-                enc <- Falso
-                Para i <- 1 Hasta c Con Paso 1
-                    Si nom[i] = nB Entonces
-                        enc <- Verdadero
-                    FinSi
-                FinPara
-                Si enc Entonces
-                    Escribir "Ese producto ya existe. Use la opcion Actualizar stock."
+                Si Longitud(nB) = 0 Entonces
+                    Escribir "El nombre no puede estar vacio."
                 SiNo
-                    c <- c + 1
-                    nom[c] <- nB
-                    Para j <- 1 Hasta 6 Con Paso 1
-                        Escribir "Stock talla ", 33 + j, ": "
-                        ok <- Falso
-                        Repetir
-                            Leer txt
-                            Si esNum(txt) Entonces
-                                inv[c,j] <- ConvertirANumero(txt)
-                                ok <- Verdadero
-                            SiNo
-                                Escribir "Invalido, volver a dar stock: "
-                            FinSi
-                        Hasta Que ok
+                    // Busqueda sin distinguir mayusculas/minusculas (casefold)
+                    enc <- Falso
+                    Para i <- 1 Hasta c Con Paso 1
+                        Si Minusculas(nom[i]) = Minusculas(nB) Entonces
+                            enc <- Verdadero
+                        FinSi
                     FinPara
-                    Escribir "Producto registrado."
+
+                    Si enc Entonces
+                        Escribir "Ese producto ya existe. Use la opcion Actualizar stock."
+                    SiNo
+                        c <- c + 1
+                        nom[c] <- nB
+                        Para j <- 1 Hasta 6 Con Paso 1
+                            Escribir "Stock talla ", tallas[j], ": "
+                            ok <- Falso
+                            Repetir
+                                Leer txt
+                                Si esNum(txt) Entonces
+                                    inv[c,j] <- ConvertirANumero(txt)
+                                    ok <- Verdadero
+                                SiNo
+                                    Escribir "Invalido. Ingrese nuevamente el stock."
+                                FinSi
+                            Hasta Que ok
+                        FinPara
+
+                        // Ordenamiento burbuja por nombre (A-Z, sin distinguir mayusculas)
+                        i <- 1
+                        hubo <- Verdadero
+                        Mientras i <= c - 1 Y hubo Hacer
+                            hubo <- Falso
+                            Para j <- 1 Hasta c - i Con Paso 1
+                                Si Minusculas(nom[j]) > Minusculas(nom[j+1]) Entonces
+                                    aux <- nom[j]
+                                    nom[j] <- nom[j+1]
+                                    nom[j+1] <- aux
+                                    Para k <- 1 Hasta 6 Con Paso 1
+                                        sVal <- inv[j,k]
+                                        inv[j,k] <- inv[j+1,k]
+                                        inv[j+1,k] <- sVal
+                                    FinPara
+                                    hubo <- Verdadero
+                                FinSi
+                            FinPara
+                            i <- i + 1
+                        FinMientras
+
+                        Escribir "Producto registrado correctamente."
+                    FinSi
                 FinSi
 
             2:
+                // ---------- Consultar productos ----------
                 Si c = 0 Entonces
                     Escribir "No hay productos registrados."
                 SiNo
                     Para i <- 1 Hasta c Con Paso 1
+                        Escribir ""
                         Escribir "Producto: ", nom[i]
                         Para j <- 1 Hasta 6 Con Paso 1
                             Si inv[i,j] < sMin Entonces
-                                Escribir "  Talla ", 33 + j, ": ", inv[i,j], " *** ALERTA: STOCK BAJO ***"
+                                Escribir "  Talla ", tallas[j], ": ", inv[i,j], " *** ALERTA: STOCK BAJO ***"
                             SiNo
-                                Escribir "  Talla ", 33 + j, ": ", inv[i,j]
+                                Escribir "  Talla ", tallas[j], ": ", inv[i,j]
                             FinSi
                         FinPara
                     FinPara
                 FinSi
 
             3:
+                // ---------- Actualizar stock por talla ----------
                 Escribir "Nombre del producto a actualizar: "
                 Leer nB
-                enc <- Falso
                 idx <- 0
                 Para i <- 1 Hasta c Con Paso 1
-                    Si nom[i] = nB Entonces
+                    Si Minusculas(nom[i]) = Minusculas(nB) Entonces
                         idx <- i
-                        enc <- Verdadero
                     FinSi
                 FinPara
-                Si NO enc Entonces
+
+                Si idx = 0 Entonces
                     Escribir "Producto no encontrado."
                 SiNo
-                    Escribir "Talla a actualizar (34-39): "
+                    Escribir "Tallas disponibles: 34, 35, 36, 37, 38, 39"
                     ok <- Falso
                     Repetir
+                        Escribir "Talla a actualizar: "
                         Leer txt
                         Si esNum(txt) Entonces
                             t <- ConvertirANumero(txt)
                             Si t >= 34 Y t <= 39 Entonces
                                 ok <- Verdadero
                             SiNo
-                                Escribir "Invalido, volver a dar talla: "
+                                Escribir "Talla invalida. Seleccione una talla de la lista."
                             FinSi
                         SiNo
-                            Escribir "Invalido, volver a dar talla: "
+                            Escribir "Invalido. Ingrese nuevamente la talla."
                         FinSi
                     Hasta Que ok
 
@@ -139,11 +174,13 @@ Algoritmo InventarioCalzadosParedes
                             sVal <- ConvertirANumero(txt)
                             ok <- Verdadero
                         SiNo
-                            Escribir "Invalido, volver a dar stock: "
+                            Escribir "Invalido. Ingrese nuevamente el stock."
                         FinSi
                     Hasta Que ok
-                    inv[idx, t - 33] <- sVal
-                    Escribir "Stock actualizado."
+
+                    pos <- t - 33
+                    inv[idx, pos] <- sVal
+                    Escribir "Stock actualizado correctamente."
                 FinSi
 
             4:
